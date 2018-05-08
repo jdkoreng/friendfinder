@@ -1,120 +1,81 @@
-
-const friends = require("../data/friends.js");
-var express = require("express");
-var bodyParser = require("body-parser");
-var path = require("path");
-var app = express();
-
-
+const path = require('path');
+const friends = require ('../data/friends');
 
 module.exports = function(app){
-    // Displays all current tables as a JSON object
-app.get("/api/friends", function (req, res) {
-    return res.json(friends);
-});
-// Post function for friends
-app.post("/api/friends", function (req, res) {
-    // req.body hosts is equal to the JSON post sent from the user
-    // This works because of our body-parser middleware
-    userinfoJSON = req.body;
-
-    console.log(userinfoJSON);
-
-    let totalDifference = [];
-
-    // UserScores = userinfoJSON.scores
-
-    //push score dif into totalDifference
-    function getSum(total, num) {
-        return total + num;
+    app.get('/api/friends', function(req, res) {
+        console.log("/api/friends hit");
+      res.json(friends);
+    });
+    app.post('/api/friends', function(req, res){
+        const user = req.body;
+        console.log("survey.html", user.scores);
+            console.log("saving user info...");
+        const bestMatch = pairingAlg(user);
+        console.log(pairingAlg(user));
+        res.json(bestMatch);
+    
+    });
     }
-    //loops through friends array
-    for (i = 0; i < friends.length; i++) {
 
-        //grabs the users scores
-        const yourScores = userinfoJSON.scores;
+// A formula to pair users with friends from the friends object by comparing
+//their scores
+    function pairingAlg(u) {
+        let you = u.scores;
+        let friendlyScores = [];
+        let difference = [];
+        let totalDifference = [];
 
-        //grabs the current friends scores as an array
-        const friendScores = friends[i].scores;
+// first populate friendly Scores with the arrays from each friend object
+        friends.forEach(function(friend){
+            friendlyScores.push(friend.scores);
+        })
 
-
-
+// Loop through each array in friendlyScores, and subtract
+        // the user's array of values from that individual array
+        // and push it to the difference array
+        friendlyScores.forEach(function(score){
+            getDifference(you, score);
+        })
     
-      //stores the difference of user and friend scores in an array
-      var scoreDifArray = yourScores.map(function(item, index) {
-        // In this case item correspond to currentValue of array a, 
-        // using index to get value from array b
-        return item - friendScores[index];
-      })
-    
-
-
-
-        // //stores the difference of user and friend scores in an array
-        //  let scoreDifArray = yourScores.diff(friendScores); 
-
-         //turns each items in the array into an absolute value
-         for (x = 0; x < scoreDifArray.length; x++) {
-            scoreDifArray[x] = Math.abs(scoreDifArray[x]); 
-         }
-
-        //add up the value of the array of the difference in scores
-         let scoreDif = scoreDif.reduce(getSum);
-
-
-            //pushes to an array
-        totalDifference.push(scoreDif);
-
-  
-
-         var indexOfMin = function indexOfMin(arr) {
-            if (arr.length === 0) {
-                return -1;
-            }
-        
-            var min = arr[0];
-            var minIndex = 0;
-        
-            for (var i = 1; i < arr.length; i++) {
-                if (arr[i] < min) {
-                    minIndex = i;
-                    min = arr[i];
-                }
-            }
-        
-            return minIndex;
+// create a new array that contains the value of each aray's total sum
+        // in difference, creating a single value, "total difference"
+        // an indicator of how different the user is from their potential match
+        for (let j = 0; j < difference.length; j++){
+        x = difference[j].reduce((total, amount) => parseInt(total) + parseInt(amount));
+        totalDifference.push(x);
         }
+    console.log(totalDifference);
 
-        indexOfMin(totalDifference);
-    
-        res.json(friends[minIndex]);
-        //display the item in friends that coorsponds with minIndex
+// call indexofMin to determine the index of the smallest value in the total difference array
+        //which by the merit of the other looping functions above,
+        // will correlate with the index of the friend whose scores
+        // when subtracted from the user's scores, returns the lowest value
+    let minIndex = indexOfMin(totalDifference);
+    return friends[minIndex];
 
 
+
+// calculation functions called in the above functions ^
+    // find the index of the lowest value in the array
+function indexOfMin(arr) {
+    if (arr.length === 0) {
+        return -1;
     }
-
-    //add up scoredif array
-
-    //takes user scores, , and compares to each item in friends array
-    // does this by for looping through each item and getting the difference in numbers
-
-    //for loop through
-    //push each difference to an array and add them up
-    
-    // if (tables.length > 4) {
-
-    //     //push userinfoJSON to reserverations
-    //     reservations.push(userinfoJSON);
-    //     res.json(userinfoJSON);
-        
-        
-    // } else {
-    //     //push userinfoJSON to tables
-    //     tables.push(userinfoJSON);
-    //     res.json(userinfoJSON);
-    // }
-
-});
-
+    let min = arr[0];
+    let minIndex = 0;
+    for (let i = 1; i < arr.length; i++) {
+        if (arr[i] < min) {
+            minIndex = i;
+            min = arr[i];
+        }
+    }
+    return minIndex;
+};
+    // calculate the difference between two arrays
+function getDifference(a, b) {
+    var x = a.map(function(item, index) {
+        return Math.abs(parseInt(item) - parseInt(b[index]));   
+})
+difference.push(x);
 }
-
+    };
